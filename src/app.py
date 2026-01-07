@@ -13,6 +13,7 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 CORS(app)
 
+
 # Create the jackson family object
 jackson_family = FamilyStructure("Jackson")
 
@@ -29,8 +30,28 @@ def sitemap():
     return generate_sitemap(app)
 
 
+@app.route('/members', methods=['POST'])
+def member():
+    response_body = {}
+    if request.method == 'POST':
+        data = request.json 
+        first_name = data.get('first_name', 'Desconocido')
+        age = data.get('age', 0)
+        numbers = data.get('lucky_number',[0])
+        new_data = { 'first_name': first_name,
+                     'age': age,
+                     'lucky_number': numbers}
+        response_body['results'] = jackson_family.add_member(new_data)
+        print(response_body)
+        if response_body['results']:
+            return response_body, 200
+        print(response_body)
+        response_body['message'] = 'Error occured while submitting the data. Please verify'
+        return response_body, 400
+    
+
 @app.route('/members', methods=['GET'])
-def handle_hello():
+def members():     
     # This is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
     response_body = {"hello": "world",
@@ -38,6 +59,31 @@ def handle_hello():
     return jsonify(response_body), 200
 
 
+@app.route('/members/<int:member_id>', methods=['GET'])
+def menber(member_id):
+    response_body = {}
+    if request.method == 'GET':
+        response_body['message'] = 'Integrante de la familia'
+        response_body['results'] = jackson_family.get_member(member_id)
+        print(response_body)
+        if response_body['results']:
+            return response_body, 200
+        response_body['message'] = 'Error occured, ID not found'
+        return response_body, 400
+
+    
+
+@app.route('/members/<int:member_id>', methods=['DELETE'])
+def menber_delete(member_id):
+    response_body = {}
+    if request.method == 'DELETE':
+        response_body['message'] = 'Se ha eliminado el integrante de la familia'
+        response_body['results'] = jackson_family.delete_member(member_id)
+        print(response_body)
+        if response_body['results']:
+            return response_body, 200
+        response_body['message'] = 'Error occured, ID not found'
+        return response_body, 400
 
 # This only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
